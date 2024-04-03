@@ -65,6 +65,28 @@ class GameState(BaseModel):
     pot: int # total pot
     in_action: int # index of the player who is currently making a bet
 
+    def game_round(self) -> GameRound:
+        community_cards_count = len(self.community_cards)
+
+        if community_cards_count == 0:
+            return GameRound.PREFLOP
+        if community_cards_count == 3:
+            return GameRound.FLOP
+        if community_cards_count == 4:
+            return GameRound.TURN
+        if community_cards_count == 5:
+            return GameRound.RIVER
+
+        logger.error("could not get game round")
+        raise ValueError("ouch")
+
+    def is_preflop(self) -> bool:
+        return self.game_round() == GameRound.PREFLOP
+
+    def in_action_player(self) -> PlayerModel:
+        return self.players[self.in_action]
+
+
 
 class Card(BaseModel):
     rank: str  # 2-10, J, Q, K, A
@@ -79,7 +101,6 @@ class Player:
     VERSION = "Default Python folding player (special version v3)"
 
     def betRequest(self, game_state):
-
         my_index = game_state["in_action"]
         my_player = game_state["players"][my_index]
         my_stack = my_player["stack"]
@@ -178,4 +199,62 @@ if __name__ == '__main__':
     # Assert GameRound
     assert(GameRound(0) == GameRound.PREFLOP)
     assert(GameRound(3) == GameRound.RIVER)
+
+
+    # Assert GameState
+    game_state_data = """
+{
+  "in_action": 0,
+  "players": [
+    {
+      "name": "Player 1",
+      "stack": 1000,
+      "status": "active",
+      "bet": 0,
+      "hole_cards": [
+        {
+          "rank": "6",
+          "suit": "hearts"
+        },
+        {
+          "rank": "K",
+          "suit": "spades"
+        }
+      ],
+      "version": "Version name 1",
+      "id": 0
+    },
+    {
+      "name": "Player 2",
+      "stack": 1000,
+      "status": "active",
+      "bet": 0,
+      "hole_cards": [],
+      "version": "Version name 2",
+      "id": 1
+    }
+  ],
+  "tournament_id": "550d1d68cd7bd10003000003",
+  "game_id": "550da1cb2d909006e90004b1",
+  "round": 0,
+  "bet_index": 0,
+  "small_blind": 10,
+  "orbits": 0,
+  "dealer": 0,
+  "community_cards": [],
+  "current_buy_in": 0,
+  "pot": 0
+}
+    """
+    state = GameState.model_validate_json(game_state_data)
+
+    assert(state.game_round() == GameRound.PREFLOP)
+    assert(state.is_preflop())
+    assert(state.in_action_player().name == "Player 1")
+    assert(state.in_action_player().stack == 1000)
+    assert(state.in_action_player().hole_cards == [Card(rank="6", suit="hearts"), Card(rank="K", suit="spades")])
+
+    state.community_cards = [Card(rank="A", suit="hearts"), Card(rank="K", suit="hearts"), Card(rank="Q", suit="hearts")]
+    assert(state.game_round() == GameRound.FLOP)
+
     
