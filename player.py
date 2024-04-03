@@ -46,7 +46,7 @@ class Card(BaseModel):
     rank: str # 2-10, J, Q, K, A
     suit: str # hearts, diamonds, clubs, spades
 
-    def coverted_rank(self) -> str:
+    def converted_rank(self) -> str:
         """return T if 10 else return rank"""
         return self.rank if self.rank != "10" else "T"
 
@@ -73,20 +73,27 @@ class Player:
         pass
 
 
+class Hand:
+    def __init__(self, cards: List[Card]):
+        self.cards = cards
+
+    def __repr__(self):
+        # rank order
+        order = "23456789TJQKA"
+
+        # sort cards by rank
+        sorted_cards = sorted(self.cards, key=lambda card: order.index(card.converted_rank()), reverse=True)
+
+        # check if every cards have same suit
+        is_same_suit = all([card.suit == self.cards[0].suit for card in self.cards])
+
+        # build the rank representation
+        repr = "".join([card.converted_rank() for card in sorted_cards]) + ('s' if is_same_suit else 'o')
+
+        return repr
+
 def is_top_twenty_percent_range(a: Card, b: Card) -> bool:
     """Returns True if the two cards are in the top 20% of hands."""
-    is_same_suit = a.suit == b.suit
-    is_pair = a.rank == b.rank
-
-    order = "23456789TJQKA"
-    a_index = order.index(a.coverted_rank())
-    b_index = order.index(b.coverted_rank())
-
-    first_card = a if a_index > b_index else b
-    second_card = b if a_index > b_index else a
-
-    # eg "AKs", "QJs", "T9o"
-    repr = f"{first_card.rank}{second_card.rank}{'s' if is_same_suit else 'o'}"
 
     top_twenty_percent_hands = [
             "AAo", 
@@ -140,12 +147,17 @@ def is_top_twenty_percent_range(a: Card, b: Card) -> bool:
             "65s",
     ]
 
-    logger.debug(f"Checking if {repr} is in top 20% hands: {repr in top_twenty_percent_hands}")
+    return str(Hand([a, b])) in top_twenty_percent_hands
 
 
-    return repr in top_twenty_percent_hands
+if __name__ == '__main__':
+    # Assert "10" is converted to "T"
+    assert(Card(rank="10", suit="hearts").converted_rank() == "T")
 
+    # Assert Hand representation
+    assert(str(Hand([Card(rank="10", suit="hearts"), Card(rank="K", suit="hearts")])) == "KTs")
 
-
+    # Assert top 20% hands
+    assert(is_top_twenty_percent_range(Card(rank="A", suit="hearts"), Card(rank="K", suit="hearts")))
 
 
