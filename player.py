@@ -108,8 +108,10 @@ class Player:
         current_buy_in = game_state["current_buy_in"]
         small_blind = game_state["small_blind"]
         if current_buy_in <= small_blind * 2:
+            logger.debug("I'm raising 3x the small blind")
             return self.raise_(game_state, small_blind * 6)
         else:
+            logger.debug("I'm calling in preflop")
             return self.call(game_state)
 
     def my_cards(self, game_state) -> (Card, Card):
