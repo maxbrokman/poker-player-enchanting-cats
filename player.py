@@ -104,7 +104,7 @@ class Player:
     VERSION = "Default Python folding player (special version v4)"
 
     def betRequest(self, game_state):
-        #py_game_state = GameState.model_validate(game_state)
+        py_game_state = GameState.model_validate(game_state)
 
         my_index = game_state["in_action"]
         my_player = game_state["players"][my_index]
@@ -120,25 +120,25 @@ class Player:
                 logger.debug("it is preflop and i'm folding")
                 return 0
 
-        # rank_service = RankingService()
-        # my_rank = rank_service.get_rank_for_game_state(py_game_state)
+        rank_service = RankingService()
+        my_rank = rank_service.get_rank_for_game_state(py_game_state)
 
-        # if my_rank >= 2:
-        #     logger.debug("i think i have a made hand, all in")
-        #     return self.raise_all_in(game_state)
-        # elif my_rank == 1:
-        #     logger.debug("i have a strong hand, call")
-        #     return self.call(game_state)
-        # else:
-        #     logger.debug("i have nothing, fold")
-        #     return 0
-
-        if is_top_twenty_percent_range(card_a, card_b):
-            logger.debug("I'm going all in!")
-            return my_stack
+        if my_rank >= 2:
+            logger.debug("i think i have a made hand, all in")
+            return self.raise_all_in(game_state)
+        elif my_rank == 1:
+            logger.debug("i have a strong hand, call")
+            return self.call(game_state)
         else:
-            logger.debug("I'm folding!")
+            logger.debug("i have nothing, fold")
             return 0
+
+        # if is_top_twenty_percent_range(card_a, card_b):
+        #     logger.debug("I'm going all in!")
+        #     return my_stack
+        # else:
+        #     logger.debug("I'm folding!")
+        #     return 0
 
     def showdown(self, game_state):
         pass
@@ -227,7 +227,7 @@ class RankingService:
 
         all_cards = [{"rank": c.rank, "suit": c.suit} for c in cards]
         try:
-            response = requests.get("https://rainman.leanpoker.org/rank", params={"cards": json.dumps(all_cards)})
+            response = requests.get("https://rainman.leanpoker.org/rank", params={"cards": json.dumps(all_cards)}, timeout=10)
         except Exception as e:
             logger.error(e)
             logger.error("could not retrieve ranking")
