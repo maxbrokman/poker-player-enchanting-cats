@@ -2,7 +2,7 @@ from typing import List
 
 from pydantic import BaseModel
 
-class Card(BaseModel):
+class RankingCard(BaseModel):
     rank: str  # 2-10, J, Q, K, A
     suit: str  # hearts, diamonds, clubs, spades
 
@@ -24,10 +24,10 @@ class Card(BaseModel):
         """
         rank = card[:-1]
         suit = card[-1]
-        return Card(rank=rank, suit=suit)
+        return RankingCard(rank=rank, suit=suit)
 
-class Hand:
-    def __init__(self, cards: List[Card]):
+class RankingHand:
+    def __init__(self, cards: List[RankingCard]):
         self.cards = cards
 
     def __repr__(self):
@@ -53,11 +53,11 @@ class Hand:
             - "2h 3h" -> Hand([Card(rank="2", suit="hearts"), Card(rank="3", suit="hearts")])
         """
 
-        cards = [Card.from_string(card) for card in hand.split()]
-        return Hand(cards)
+        cards = [RankingCard.from_string(card) for card in hand.split()]
+        return RankingHand(cards)
 
 
-def get_rank(hand: Hand) -> int:
+def get_rank(hand: RankingHand) -> int:
     """
     Calculate the rank of the hand
     
@@ -104,11 +104,11 @@ def get_rank(hand: Hand) -> int:
 
     # check for two pairs
     if list(pairs.values()).count(2) == 2:
-        return 3
+        return 2
 
     # check for pair
     if 2 in pairs.values():
-        return 2
+        return 1
 
     # check for straight flush
     if is_straight and is_flush:
@@ -122,20 +122,20 @@ def get_rank(hand: Hand) -> int:
     if is_straight:
         return 5
 
-    return 1  # high card 
+    return 0  # high card
 
 if __name__ == "__main__":
     # test the code
-    royal_flush = Hand.from_string("Ah Kh Qh Jh Th")
-    straight_flush = Hand.from_string("9h 8h 7h 6h 5h")
-    four_of_a_kind = Hand.from_string("2h 2d 2c 2s 3h")
-    full_house = Hand.from_string("2h 2d 2c 3s 3h")
-    flush = Hand.from_string("2h 4h 6h 8h Th")
-    straight = Hand.from_string("2h 3d 4c 5s 6h")
-    three_of_a_kind = Hand.from_string("2h 2d 2c 3s 4h")
-    two_pair = Hand.from_string("2h 2d 3c 3s 4h")
-    pair = Hand.from_string("2h 2d 3c 4s 5h")
-    high_cards = Hand.from_string("2h 3d 4c 5s 7h")
+    royal_flush = RankingHand.from_string("Ah Kh Qh Jh Th")
+    straight_flush = RankingHand.from_string("9h 8h 7h 6h 5h")
+    four_of_a_kind = RankingHand.from_string("2h 2d 2c 2s 3h")
+    full_house = RankingHand.from_string("2h 2d 2c 3s 3h")
+    flush = RankingHand.from_string("2h 4h 6h 8h Th")
+    straight = RankingHand.from_string("2h 3d 4c 5s 6h")
+    three_of_a_kind = RankingHand.from_string("2h 2d 2c 3s 4h")
+    two_pair = RankingHand.from_string("2h 2d 3c 3s 4h")
+    pair = RankingHand.from_string("2h 2d 3c 4s 5h")
+    high_cards = RankingHand.from_string("2h 3d 4c 5s 7h")
 
     assert(get_rank(royal_flush) == 9)
     assert(get_rank(straight_flush) == 9)
