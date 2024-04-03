@@ -9,16 +9,17 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
-from enum import Enum, StrEnum
+from enum import Enum, IntEnum
 from typing import List
 from pydantic import BaseModel
+from ranges import top_twenty_percent_hands
 
 
-class GameRound(StrEnum):
-    PREFLOP = 'preflop'
-    FLOP = 'flop'
-    TURN = 'turn'
-    RIVER = 'river'
+class GameRound(IntEnum):
+    PREFLOP = 0
+    FLOP = 1
+    TURN = 2
+    RIVER = 3
 
 
 def get_game_round(community_cards_count: int) -> GameRound:
@@ -78,16 +79,12 @@ class Player:
     VERSION = "Default Python folding player (special version v2)"
 
     def betRequest(self, game_state):
-        community_cards = game_state["community_cards"]
-        game_round = get_game_round(len(community_cards))
 
         my_index = game_state["in_action"]
         my_player = game_state["players"][my_index]
         my_stack = my_player["stack"]
 
-        my_cards = my_player["hole_cards"]
-        card_a = Card(**my_cards[0])
-        card_b = Card(**my_cards[1])
+        card_a, card_b = self.my_cards(game_state)
 
         if is_top_twenty_percent_range(card_a, card_b):
             logger.debug("I'm going all in!")
@@ -98,6 +95,32 @@ class Player:
 
     def showdown(self, game_state):
         pass
+
+
+    def my_cards(self, game_state) -> (Card, Card):
+        my_index = game_state["in_action"]
+        my_player = game_state["players"][my_index]
+
+        my_cards = my_player["hole_cards"]
+        card_a = Card(**my_cards[0])
+        card_b = Card(**my_cards[1])
+
+        return (card_a, card_b)
+
+    def call(self, game_state):
+        """Returns the amount of chips to call."""
+        buy_in = game_state["current_buy_in"]
+        bet = game_state["players"][game_state["in_action"]]["bet"] or 0
+
+        return buy_in - bet
+
+    def raise_(self, game_state, amount: int):
+        """Returns the amount of chips to raise."""
+
+        return self.call(game_state) + amount
+
+    def is_preflop(self, game_state) -> bool:
+        return get_game_round(len(game_state["community_cards"])) == GameRound.PREFLOP
 
 class Hand:
     def __init__(self, cards: List[Card]):
@@ -122,58 +145,6 @@ class Hand:
 def is_top_twenty_percent_range(a: Card, b: Card) -> bool:
     """Returns True if the two cards are in the top 20% of hands."""
 
-    top_twenty_percent_hands = [
-        "AAo",
-        "KKo",
-        "QQo",
-        "JJo",
-        "TTo",
-        "99o",
-        "88o",
-        "77o",
-        "66o",
-        "55o",
-        "44o",
-
-        "AKs",
-        "AQs",
-        "AJs",
-        "ATs",
-        "ATs",
-        "A9s",
-        "A8s",
-        "A7s",
-        "A6s",
-        "A5s",
-        "A4s",
-        "A3s",
-        "A2s",
-
-        "AKo",
-        "AQo",
-        "AJo",
-        "ATo",
-
-        "KQo",
-        "KJo",
-        "KQs",
-        "KJs",
-        "KTs",
-        "K9s",
-
-        "QJs",
-        "QTs",
-        "Q9s",
-
-        "JTs",
-        "J9s",
-        "T9s",
-        "98s",
-        "87s",
-        "76s",
-        "65s",
-    ]
-
     return str(Hand([a, b])) in top_twenty_percent_hands
 
 if __name__ == '__main__':
@@ -188,3 +159,8 @@ if __name__ == '__main__':
 
     # Assert is not top 20% hands
     assert(not is_top_twenty_percent_range(Card(rank="2", suit="hearts"), Card(rank="3", suit="hearts")))
+
+    # Assert GameRound
+    assert(GameRound(0) == GameRound.PREFLOP)
+    assert(GameRound(3) == GameRound.RIVER)
+    
