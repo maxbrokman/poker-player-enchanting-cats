@@ -79,15 +79,12 @@ class Player:
     VERSION = "Default Python folding player (special version v2)"
 
     def betRequest(self, game_state):
-        community_cards = game_state["community_cards"]
 
         my_index = game_state["in_action"]
         my_player = game_state["players"][my_index]
         my_stack = my_player["stack"]
 
-        my_cards = my_player["hole_cards"]
-        card_a = Card(**my_cards[0])
-        card_b = Card(**my_cards[1])
+        card_a, card_b = self.my_cards(game_state)
 
         if is_top_twenty_percent_range(card_a, card_b):
             logger.debug("I'm going all in!")
@@ -98,6 +95,17 @@ class Player:
 
     def showdown(self, game_state):
         pass
+
+
+    def my_cards(self, game_state) -> (Card, Card):
+        my_index = game_state["in_action"]
+        my_player = game_state["players"][my_index]
+
+        my_cards = my_player["hole_cards"]
+        card_a = Card(**my_cards[0])
+        card_b = Card(**my_cards[1])
+
+        return (card_a, card_b)
 
     def call(self, game_state):
         """Returns the amount of chips to call."""
