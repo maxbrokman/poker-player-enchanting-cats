@@ -123,22 +123,22 @@ class Player:
         rank_service = RankingService()
         my_rank = rank_service.get_rank_for_game_state(py_game_state)
 
-        if my_rank >= 2:
-            logger.debug("i think i have a made hand, all in")
-            return self.raise_all_in(game_state)
-        elif my_rank == 1:
-            logger.debug("i have a strong hand, call")
-            return self.call(game_state)
-        else:
-            logger.debug("i have nothing, fold")
-            return 0
-
-        # if is_top_twenty_percent_range(card_a, card_b):
-        #     logger.debug("I'm going all in!")
-        #     return my_stack
+        # if my_rank >= 2:
+        #     logger.debug("i think i have a made hand, all in")
+        #     return self.raise_all_in(game_state)
+        # elif my_rank == 1:
+        #     logger.debug("i have a strong hand, call")
+        #     return self.call(game_state)
         # else:
-        #     logger.debug("I'm folding!")
+        #     logger.debug("i have nothing, fold")
         #     return 0
+
+        if is_top_twenty_percent_range(card_a, card_b):
+            logger.debug("I'm going all in!")
+            return my_stack
+        else:
+            logger.debug("I'm folding!")
+            return 0
 
     def showdown(self, game_state):
         pass
