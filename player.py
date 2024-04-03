@@ -8,6 +8,8 @@ from typing import List
 import requests
 from pydantic import BaseModel
 
+from ranking import RankingHand, get_rank, RankingCard
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
@@ -16,6 +18,9 @@ from enum import Enum, IntEnum
 from typing import List
 from pydantic import BaseModel
 from ranges import top_twenty_percent_hands
+
+
+
 
 
 class GameRound(IntEnum):
@@ -220,7 +225,14 @@ class RankingService:
         for card in game_state.in_action_player().hole_cards:
             cards.append(card)
 
-        return self.rank(cards)
+        overall_rank = self.rank(cards)
+        board_rank = get_rank(RankingHand([RankingCard(rank=c.rank, suit=c.suit) for c in game_state.community_cards]))
+
+        if board_rank == 1 or board_rank == 2:
+            logger.debug(f"overall rank considering board is {overall_rank - board_rank}")
+            return overall_rank - board_rank
+
+        return overall_rank
 
     def rank(self, cards: List[Card]) -> int:
 
@@ -354,5 +366,60 @@ if __name__ == '__main__':
     ])
     assert ranked == 7
 
+    # Assert GameState
+    game_state_data = """
+    {
+      "in_action": 0,
+      "players": [
+        {
+          "name": "Player 1",
+          "stack": 1000,
+          "status": "active",
+          "bet": 0,
+          "hole_cards": [
+            {
+              "rank": "6",
+              "suit": "hearts"
+            },
+            {
+              "rank": "K",
+              "suit": "spades"
+            }
+          ],
+          "version": "Version name 1",
+          "id": 0
+        },
+        {
+          "name": "Player 2",
+          "stack": 1000,
+          "status": "active",
+          "bet": 0,
+          "version": "Version name 2",
+          "id": 1
+        }
+      ],
+      "tournament_id": "550d1d68cd7bd10003000003",
+      "game_id": "550da1cb2d909006e90004b1",
+      "round": 0,
+      "bet_index": 0,
+      "small_blind": 10,
+      "orbits": 0,
+      "dealer": 0,
+      "community_cards": [
+        {"rank": "7", "suit": "hearts"},
+        {"rank": "7", "suit": "diamonds"},
+        {"rank": "8", "suit": "spades"},
+        {"rank": "8", "suit": "clubs"}
+      ],
+      "current_buy_in": 0,
+      "pot": 0
+    }
+        """
 
-    
+    dict_state = json.loads(game_state_data)
+    state = GameState.model_validate(dict_state)
+
+    ranking_service = RankingService()
+    rank = ranking_service.get_rank_for_game_state(state)
+    assert rank == 0
+
