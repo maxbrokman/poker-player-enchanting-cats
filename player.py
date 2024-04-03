@@ -40,17 +40,15 @@ class PlayerModel(BaseModel):
 
 
 class GameState(BaseModel):
-    players: List[PlayerModel]
-    tournament_id: str
-    game_id: str
-    round: int
-    bet_index: int
-    small_blind: int
-    orbits: int
-    dealer: int
-    community_cards: List[Card]
-    current_buy_in: int
-    pot: int
+    players: List[PlayerModel] # An array of the players. The order stays the same during the entire game.
+    round: int # the round number
+    small_blind: int # the small blind in the current round
+    orbits: int # number of orbits completed in the tournament
+    dealer: int # index of the dealer
+    community_cards: List[Card] # community cards
+    current_buy_in: int # the amount of the largest current bet from any one player
+    pot: int # total pot
+    in_action: int # index of the player who is currently making a bet
 
 
 class Card(BaseModel):
@@ -83,7 +81,6 @@ class Player:
 
     def showdown(self, game_state):
         pass
-
 
 class Hand:
     def __init__(self, cards: List[Card]):
@@ -162,13 +159,15 @@ def is_top_twenty_percent_range(a: Card, b: Card) -> bool:
 
     return str(Hand([a, b])) in top_twenty_percent_hands
 
-
 if __name__ == '__main__':
     # Assert "10" is converted to "T"
-    assert (Card(rank="10", suit="hearts").converted_rank() == "T")
+    assert(Card(rank="10", suit="hearts").converted_rank() == "T")
 
     # Assert Hand representation
-    assert (str(Hand([Card(rank="10", suit="hearts"), Card(rank="K", suit="hearts")])) == "KTs")
+    assert(str(Hand([Card(rank="10", suit="hearts"), Card(rank="K", suit="hearts")])) == "KTs")
 
     # Assert top 20% hands
-    assert (is_top_twenty_percent_range(Card(rank="A", suit="hearts"), Card(rank="K", suit="hearts")))
+    assert(is_top_twenty_percent_range(Card(rank="A", suit="hearts"), Card(rank="K", suit="hearts")))
+
+    # Assert is not top 20% hands
+    assert(not is_top_twenty_percent_range(Card(rank="2", suit="hearts"), Card(rank="3", suit="hearts")))
