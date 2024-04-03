@@ -104,7 +104,7 @@ class Player:
     VERSION = "Default Python folding player (special version v4)"
 
     def betRequest(self, game_state):
-        #py_game_state = GameState.model_validate(game_state)
+        py_game_state = GameState.model_validate(game_state)
 
         my_index = game_state["in_action"]
         my_player = game_state["players"][my_index]
@@ -120,18 +120,18 @@ class Player:
                 logger.debug("it is preflop and i'm folding")
                 return 0
 
-        # rank_service = RankingService()
-        # my_rank = rank_service.get_rank_for_game_state(py_game_state)
-        #
-        # if my_rank >= 2:
-        #     logger.debug("i think i have a made hand, all in")
-        #     return self.raise_all_in(game_state)
-        # elif my_rank == 1:
-        #     logger.debug("i have a strong hand, call")
-        #     return self.call(game_state)
-        # else:
-        #     logger.debug("i have nothing, fold")
-        #     return 0
+        rank_service = RankingService()
+        my_rank = rank_service.get_rank_for_game_state(py_game_state)
+
+        if my_rank >= 2:
+            logger.debug("i think i have a made hand, all in")
+            return self.raise_all_in(game_state)
+        elif my_rank == 1:
+            logger.debug("i have a strong hand, call")
+            return self.call(game_state)
+        else:
+            logger.debug("i have nothing, fold")
+            return 0
 
         if is_top_twenty_percent_range(card_a, card_b):
             logger.debug("I'm going all in!")
@@ -215,10 +215,10 @@ class RankingService:
     def get_rank_for_game_state(self, game_state: GameState) -> int:
         cards = []
         for card in game_state.community_cards:
-            cards += card
+            cards.append(card)
 
         for card in game_state.in_action_player().hole_cards:
-            cards += card
+            cards.append(card)
 
         return self.rank(cards)
 
@@ -304,7 +304,11 @@ if __name__ == '__main__':
   "small_blind": 10,
   "orbits": 0,
   "dealer": 0,
-  "community_cards": [],
+  "community_cards": [
+    {"rank": "6", "suit": "hearts"},
+    {"rank": "K", "suit": "spades"},
+    {"rank": "8", "suit": "spades"}
+  ],
   "current_buy_in": 0,
   "pot": 0
 }
@@ -318,11 +322,12 @@ if __name__ == '__main__':
 
     state = GameState.model_validate(dict_state)
 
-    assert(state.game_round() == GameRound.PREFLOP)
-    assert(state.is_preflop())
+    assert(state.game_round() == GameRound.FLOP)
+    assert(not state.is_preflop())
     assert(state.in_action_player().name == "Player 1")
     assert(state.in_action_player().stack == 1000)
     assert(state.in_action_player().hole_cards == [Card(rank="6", suit="hearts"), Card(rank="K", suit="spades")])
+    assert(state.community_cards) == [Card(rank="6", suit="hearts"), Card(rank="K", suit="spades"), Card(rank="8", suit="spades")]
 
     state.community_cards = [Card(rank="A", suit="hearts"), Card(rank="K", suit="hearts"), Card(rank="Q", suit="hearts")]
     assert(state.game_round() == GameRound.FLOP)
