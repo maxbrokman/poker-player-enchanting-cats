@@ -89,7 +89,7 @@ class Player:
         if self.is_preflop(game_state):
             if is_top_twenty_percent_range(card_a, card_b):
                 logger.debug("it is preflop and i'm in range")
-                return my_stack
+                return self.raise_all_in(game_state)
             else:
                 logger.debug("it is preflop and i'm folding")
                 return 0
@@ -126,6 +126,13 @@ class Player:
         """Returns the amount of chips to raise."""
 
         return self.call(game_state) + amount
+
+    def raise_all_in(self, game_state):
+        my_index = game_state["in_action"]
+        my_player = game_state["players"][my_index]
+        my_stack = my_player["stack"]
+
+        return my_stack
 
     def is_preflop(self, game_state) -> bool:
         return get_game_round(len(game_state["community_cards"])) == GameRound.PREFLOP
