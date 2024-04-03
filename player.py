@@ -80,7 +80,6 @@ class Player:
 
     def betRequest(self, game_state):
         community_cards = game_state["community_cards"]
-        game_round = get_game_round(len(community_cards))
 
         my_index = game_state["in_action"]
         my_player = game_state["players"][my_index]
@@ -113,7 +112,7 @@ class Player:
         return self.call(game_state) + amount
 
     def is_preflop(self, game_state) -> bool:
-        return game_state["round"] == GameRound.PREFLOP
+        return get_game_round(len(game_state["community_cards"])) == GameRound.PREFLOP
 
 class Hand:
     def __init__(self, cards: List[Card]):
