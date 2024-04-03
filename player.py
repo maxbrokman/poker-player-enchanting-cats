@@ -29,7 +29,7 @@ class Card(BaseModel):
     suit: str
 
 class Player:
-    VERSION = "Default Python folding player (special version)"
+    VERSION = "Default Python folding player (special version v2)"
 
     def betRequest(self, game_state):
         my_index = game_state["in_action"]
