@@ -9,17 +9,17 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
-from enum import Enum, StrEnum
+from enum import Enum, IntEnum
 from typing import List
 from pydantic import BaseModel
 from ranges import top_twenty_percent_hands
 
 
-class GameRound(StrEnum):
-    PREFLOP = 'preflop'
-    FLOP = 'flop'
-    TURN = 'turn'
-    RIVER = 'river'
+class GameRound(IntEnum):
+    PREFLOP = 0
+    FLOP = 1
+    TURN = 2
+    RIVER = 3
 
 
 def get_game_round(community_cards_count: int) -> GameRound:
@@ -100,6 +100,21 @@ class Player:
     def showdown(self, game_state):
         pass
 
+    def call(self, game_state):
+        """Returns the amount of chips to call."""
+        buy_in = game_state["current_buy_in"]
+        bet = game_state["players"][game_state["in_action"]]["bet"] or 0
+
+        return buy_in - bet
+
+    def raise_(self, game_state, amount: int):
+        """Returns the amount of chips to raise."""
+
+        return self.call(game_state) + amount
+
+    def is_preflop(self, game_state) -> bool:
+        return game_state["round"] == GameRound.PREFLOP
+
 class Hand:
     def __init__(self, cards: List[Card]):
         self.cards = cards
@@ -137,3 +152,8 @@ if __name__ == '__main__':
 
     # Assert is not top 20% hands
     assert(not is_top_twenty_percent_range(Card(rank="2", suit="hearts"), Card(rank="3", suit="hearts")))
+
+    # Assert GameRound
+    assert(GameRound(0) == GameRound.PREFLOP)
+    assert(GameRound(3) == GameRound.RIVER)
+    
