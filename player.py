@@ -1,6 +1,13 @@
 from __future__ import annotations
+
+import logging
+import sys
 from typing import List
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logger.addHandler(logging.StreamHandler(sys.stdout))
 
 class PlayerModel(BaseModel):
     name: str
