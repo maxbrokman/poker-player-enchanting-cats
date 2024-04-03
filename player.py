@@ -21,6 +21,20 @@ class GameRound(StrEnum):
     RIVER = 'river'
 
 
+def get_game_round(community_cards_count: int) -> GameRound:
+    if community_cards_count == 0:
+        return GameRound.PREFLOP
+    if community_cards_count == 3:
+        return GameRound.FLOP
+    if community_cards_count == 4:
+        return GameRound.TURN
+    if community_cards_count == 5:
+        return GameRound.RIVER
+
+    logger.error("could not get game round")
+    raise ValueError("ouch")
+
+
 class PlayerPosition(Enum):
     BUTTON = "button"
     BIG_BLIND = "big_blind"
@@ -66,6 +80,9 @@ class Player:
     VERSION = "Default Python folding player (special version v2)"
 
     def betRequest(self, game_state):
+        community_cards = game_state["community_cards"]
+        game_round = get_game_round(len(community_cards))
+
         my_index = game_state["in_action"]
         my_player = game_state["players"][my_index]
         my_stack = my_player["stack"]
