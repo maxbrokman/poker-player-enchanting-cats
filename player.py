@@ -76,7 +76,7 @@ class Card(BaseModel):
 
 
 class Player:
-    VERSION = "Default Python folding player (special version v2)"
+    VERSION = "Default Python folding player (special version v3)"
 
     def betRequest(self, game_state):
 
@@ -85,6 +85,14 @@ class Player:
         my_stack = my_player["stack"]
 
         card_a, card_b = self.my_cards(game_state)
+
+        if self.is_preflop(game_state):
+            if is_top_twenty_percent_range(card_a, card_b):
+                logger.debug("it is preflop and i'm in range")
+                return my_stack
+            else:
+                logger.debug("it is preflop and i'm folding")
+                return 0
 
         if is_top_twenty_percent_range(card_a, card_b):
             logger.debug("I'm going all in!")
