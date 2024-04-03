@@ -89,7 +89,7 @@ class Player:
         if self.is_preflop(game_state):
             if is_top_twenty_percent_range(card_a, card_b):
                 logger.debug("it is preflop and i'm in range")
-                return self.raise_all_in(game_state)
+                return self.determine_preflop_bet(game_state)
             else:
                 logger.debug("it is preflop and i'm folding")
                 return 0
@@ -104,6 +104,13 @@ class Player:
     def showdown(self, game_state):
         pass
 
+    def determine_preflop_bet(self, game_state):
+        current_buy_in = game_state["current_buy_in"]
+        small_blind = game_state["small_blind"]
+        if current_buy_in <= small_blind * 2:
+            return self.raise_(game_state, small_blind * 6)
+        else:
+            return self.call(game_state)
 
     def my_cards(self, game_state) -> (Card, Card):
         my_index = game_state["in_action"]
