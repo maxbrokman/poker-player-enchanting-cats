@@ -58,7 +58,16 @@ class Player:
         my_player = game_state["players"][my_index]
         my_stack = my_player["stack"]
 
-        return my_stack
+        my_cards = my_player["hole_cards"]
+        card_a = Card(**my_cards[0])
+        card_b = Card(**my_cards[1])
+
+        if is_top_twenty_percent_range(card_a, card_b):
+            logger.debug("I'm going all in!")
+            return my_stack
+        else:
+            logger.debug("I'm folding!")
+            return 0
 
     def showdown(self, game_state):
         pass
