@@ -12,6 +12,7 @@ logger.addHandler(logging.StreamHandler(sys.stdout))
 from enum import Enum, StrEnum
 from typing import List
 from pydantic import BaseModel
+from ranges import top_twenty_percent_hands
 
 
 class GameRound(StrEnum):
@@ -121,58 +122,6 @@ class Hand:
 
 def is_top_twenty_percent_range(a: Card, b: Card) -> bool:
     """Returns True if the two cards are in the top 20% of hands."""
-
-    top_twenty_percent_hands = [
-        "AAo",
-        "KKo",
-        "QQo",
-        "JJo",
-        "TTo",
-        "99o",
-        "88o",
-        "77o",
-        "66o",
-        "55o",
-        "44o",
-
-        "AKs",
-        "AQs",
-        "AJs",
-        "ATs",
-        "ATs",
-        "A9s",
-        "A8s",
-        "A7s",
-        "A6s",
-        "A5s",
-        "A4s",
-        "A3s",
-        "A2s",
-
-        "AKo",
-        "AQo",
-        "AJo",
-        "ATo",
-
-        "KQo",
-        "KJo",
-        "KQs",
-        "KJs",
-        "KTs",
-        "K9s",
-
-        "QJs",
-        "QTs",
-        "Q9s",
-
-        "JTs",
-        "J9s",
-        "T9s",
-        "98s",
-        "87s",
-        "76s",
-        "65s",
-    ]
 
     return str(Hand([a, b])) in top_twenty_percent_hands
 
