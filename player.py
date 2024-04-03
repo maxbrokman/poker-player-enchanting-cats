@@ -12,7 +12,7 @@ class PlayerModel(BaseModel):
     id: int
 
 class GameState(BaseModel):
-    players: List[Player]
+    players: List[PlayerModel]
     tournament_id: str
     game_id: str
     round: int
