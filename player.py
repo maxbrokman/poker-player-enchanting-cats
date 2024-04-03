@@ -52,7 +52,7 @@ class PlayerModel(BaseModel):
     stack: int
     status: str
     bet: int
-    hole_cards: List[Card]
+    hole_cards: List[Card] | None = None
     version: str
     id: int
 
@@ -223,6 +223,8 @@ class RankingService:
         return self.rank(cards)
 
     def rank(self, cards: List[Card]) -> int:
+
+
         all_cards = [{"rank": c.rank, "suit": c.suit} for c in cards]
         try:
             response = requests.get("https://rainman.leanpoker.org/rank", params={"cards": json.dumps(all_cards)})
@@ -291,7 +293,6 @@ if __name__ == '__main__':
       "stack": 1000,
       "status": "active",
       "bet": 0,
-      "hole_cards": [],
       "version": "Version name 2",
       "id": 1
     }
@@ -309,6 +310,11 @@ if __name__ == '__main__':
 }
     """
     dict_state = json.loads(game_state_data)
+
+    player = Player()
+    bet = player.betRequest(dict_state)
+    assert isinstance(bet, int)
+    assert bet >= 0
 
     state = GameState.model_validate(dict_state)
 
