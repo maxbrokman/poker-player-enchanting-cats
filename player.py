@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import List
 from pydantic import BaseModel
 
-class Player(BaseModel):
+class PlayerModel(BaseModel):
     name: str
     stack: int
     status: str
