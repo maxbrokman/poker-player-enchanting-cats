@@ -217,7 +217,7 @@ class RankingService:
         for card in game_state.community_cards:
             cards += card
 
-        for card in game_state.in_action_player().hole_cards():
+        for card in game_state.in_action_player().hole_cards:
             cards += card
 
         return self.rank(cards)
