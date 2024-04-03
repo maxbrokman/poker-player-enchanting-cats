@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import json
 import logging
 import sys
 from typing import List
+
+import requests
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -98,9 +101,11 @@ class Card(BaseModel):
 
 
 class Player:
-    VERSION = "Default Python folding player (special version v3)"
+    VERSION = "Default Python folding player (special version v4)"
 
     def betRequest(self, game_state):
+        py_game_state = GameState.model_validate_json(game_state)
+
         my_index = game_state["in_action"]
         my_player = game_state["players"][my_index]
         my_stack = my_player["stack"]
@@ -115,12 +120,25 @@ class Player:
                 logger.debug("it is preflop and i'm folding")
                 return 0
 
-        if is_top_twenty_percent_range(card_a, card_b):
-            logger.debug("I'm going all in!")
-            return my_stack
+        rank_service = RankingService()
+        my_rank = rank_service.get_rank_for_game_state(py_game_state)
+
+        if my_rank >= 2:
+            logger.debug("i think i have a made hand, all in")
+            return self.raise_all_in(game_state)
+        elif my_rank == 1:
+            logger.debug("i have a strong hand, call")
+            return self.call(game_state)
         else:
-            logger.debug("I'm folding!")
+            logger.debug("i have nothing, fold")
             return 0
+
+        # if is_top_twenty_percent_range(card_a, card_b):
+        #     logger.debug("I'm going all in!")
+        #     return my_stack
+        # else:
+        #     logger.debug("I'm folding!")
+        #     return 0
 
     def showdown(self, game_state):
         pass
@@ -191,6 +209,41 @@ def is_top_twenty_percent_range(a: Card, b: Card) -> bool:
     """Returns True if the two cards are in the top 20% of hands."""
 
     return str(Hand([a, b])) in top_twenty_percent_hands
+
+
+class RankingService:
+    def get_rank_for_game_state(self, game_state: GameState) -> int:
+        cards = []
+        for card in game_state.community_cards:
+            cards += card
+
+        for card in game_state.in_action_player().hole_cards():
+            cards += card
+
+        return self.rank(cards)
+
+    def rank(self, cards: List[Card]) -> int:
+        all_cards = [{"rank": c.rank, "suit": c.suit} for c in cards]
+        try:
+            response = requests.get("https://rainman.leanpoker.org/rank", params={"cards": json.dumps(all_cards)})
+        except Exception as e:
+            logger.error(e)
+            logger.error("could not retrieve ranking")
+            return 0
+
+        if response.status_code != 200:
+            logger.error(f"could not retrieve ranking (non 200) {response.status_code}")
+            return 0
+
+        ranks = response.json()
+        try:
+            logger.debug(f"ranked my hand as {ranks['rank']}")
+            return int(ranks["rank"])
+        except Exception:
+            logger.error("could not parse ranking")
+            return 0
+
+
 
 if __name__ == '__main__':
     # Assert "10" is converted to "T"
@@ -265,5 +318,28 @@ if __name__ == '__main__':
 
     state.community_cards = [Card(rank="A", suit="hearts"), Card(rank="K", suit="hearts"), Card(rank="Q", suit="hearts")]
     assert(state.game_round() == GameRound.FLOP)
+
+    rank = RankingService()
+    ranked = rank.rank([
+        Card(rank="A", suit="diamonds"),
+        Card(rank="A", suit="clubs"),
+        Card(rank="A", suit="hearts"),
+        Card(rank="A", suit="spades"),
+        Card(rank="2", suit="spades"),
+    ])
+    assert ranked == 7
+
+    rank = RankingService()
+    ranked = rank.rank([
+        Card(rank="A", suit="diamonds"),
+        Card(rank="A", suit="clubs"),
+        Card(rank="A", suit="hearts"),
+        Card(rank="A", suit="spades"),
+        Card(rank="2", suit="spades"),
+        Card(rank="3", suit="spades"),
+        Card(rank="4", suit="spades"),
+    ])
+    assert ranked == 7
+
 
     
